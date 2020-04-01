@@ -18,6 +18,7 @@ class RLSFilter():
 
         self.theta = np.zeros((self.param_dim, self.output_dim))
         self.covar = np.eye(self.param_dim)
+        self.pred_error_covar = np.zeros((self.state_dim, self.state_dim))
 
     def _make_feature_vec(self, state):
         assert(state.shape == (self.state_dim, 1))
@@ -53,11 +54,26 @@ class RLSFilter():
         self.t += 1.0
         self.intercept /= float(self.t)
 
+    def _update_pred_error_covar(self, state, output):
+        pred = self.predict(state)
+        assert(pred.shape == (self.state_dim, 1))
+        pred_error = output - pred
+
+        # self.t already updated by _update_theta
+        self.pred_error_covar = (self.t - 1.0) * self.pred_error_covar + pred_error.dot(pred_error.transpose())
+        self.pred_error_covar /= float(self.t)
+        assert(self.pred_error_covar.shape == (self.state_dim, self.state_dim))
+
     def process_datum(self, state, output):
         feat = self._make_feature_vec(state)
 
         self._update_covar(feat)
         self._update_theta(feat, output)
+        self._update_pred_error_covar(state, output)
+
+    def predict(self, state):
+        feat = self._make_feature_vec(state)
+        return feat.dot(self.theta).transpose() + self.intercept
 
     def get_identified_mats(self):
         """
