@@ -12,13 +12,15 @@ class RLSFilter():
         self.ref_state = ref_state.reshape((self.state_dim, 1))
 
         self.param_dim = state_dim
-        self.intercept = np.zeros((self.state_dim, 1))
+        self.intercept = np.zeros((self.output_dim, 1))
 
         self.t = 1.0
 
         self.theta = np.zeros((self.param_dim, self.output_dim))
         self.covar = np.eye(self.param_dim)
         self.pred_error_covar = np.zeros((self.state_dim, self.state_dim))
+
+        self.data = []
 
     def _make_feature_vec(self, state):
         assert(state.shape == (self.state_dim, 1))
@@ -48,7 +50,7 @@ class RLSFilter():
         self.theta = self.theta + correction
 
         diff = output - feat.dot(self.theta).transpose()
-        assert(diff.shape == (self.state_dim, 1))
+        assert(diff.shape == (self.output_dim, 1))
         self.intercept = self.t * self.intercept + diff
 
         self.t += 1.0
@@ -56,15 +58,17 @@ class RLSFilter():
 
     def _update_pred_error_covar(self, state, output):
         pred = self.predict(state)
-        assert(pred.shape == (self.state_dim, 1))
-        pred_error = output - pred
+        feat = self._make_feature_vec(state)
+        pred_error_coef = np.linalg.norm(output - pred)
 
         # self.t already updated by _update_theta
-        self.pred_error_covar = (self.t - 1.0) * self.pred_error_covar + pred_error.dot(pred_error.transpose())
+        self.pred_error_covar = (self.t - 1.0) * self.pred_error_covar + (pred_error_coef * feat.transpose().dot(feat))
         self.pred_error_covar /= float(self.t)
         assert(self.pred_error_covar.shape == (self.state_dim, self.state_dim))
 
     def process_datum(self, state, output):
+        self.data.append(tuple((state, output)))
+
         feat = self._make_feature_vec(state)
 
         self._update_covar(feat)
@@ -73,7 +77,10 @@ class RLSFilter():
 
     def predict(self, state):
         feat = self._make_feature_vec(state)
-        return feat.dot(self.theta).transpose() + self.intercept
+        prediction = feat.dot(self.theta).transpose() + self.intercept
+        assert(prediction.shape == (1, 1))
+
+        return prediction
 
     def get_identified_mats(self):
         """
