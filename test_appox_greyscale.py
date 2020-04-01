@@ -36,7 +36,7 @@ def run():
     pwa_model = PWAModel()
 
     iteration = 0
-    while True:
+    while iteration < 1e8:
         print("On iteration {}".format(iteration))
         iteration += 1
 
@@ -50,7 +50,7 @@ def run():
             plt.figure(figsize=(8, 6))
             pwa_model.plot_model(plt.gca(), "Fit PWA Model After {} Samples".format(iteration))
             #plt.show()
-            plt.savefig('plots/approx_{}.png'.format(iteration), dpi=300)
+            plt.savefig('plots/approx_{}.png'.format(iteration), dpi=100)
             plt.close()
 
 
