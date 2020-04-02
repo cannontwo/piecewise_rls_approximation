@@ -1,9 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import multiprocessing
-
-from functools import partial
-
 
 from scipy.spatial import cKDTree as KDTree
 from local_rls_filter import RLSFilter
@@ -118,50 +113,3 @@ class PWAModel():
         ref = self.get_nearest_reference(x)
 
         return self.local_models[tuple(ref)].predict(x)
-
-    def _compute_image_row(self, X, Y, nx, ny, i):
-        row = np.zeros((ny,))
-        for j in range(ny):
-            input_vec = np.array([X[i,j], Y[i,j]]).reshape((2,1))
-            row[j] = self.predict(input_vec)
-
-        return row
-
-    def plot_model(self, ax, title):
-        p = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
-
-        x = np.linspace(0.0, 1.0, 768)
-        y = np.linspace(0.0, 1.0, 768)
-
-        nx = len(x)
-        ny = len(y)
-
-        X, Y = np.meshgrid(x, y)
-        f = partial(self._compute_image_row, X, Y, nx, ny)
-        rows = p.map(f, range(nx))
-        Z = np.vstack(rows[::-1])
-
-        # Old version
-        #Z = np.zeros_like(X)
-        #for i in range(nx):
-        #    for j in range(ny):
-        #        input_vec = np.array([X[i,j], Y[i,j]]).reshape((2,1))
-        #        Z[nx - i - 1, j] = self.predict(input_vec)
-
-
-        plt.sca(ax)
-        #plt.xlim(0., 1.)
-        #plt.ylim(0., 1.)
-        #plt.contourf(x, y, Z, levels=255, cmap='gray')
-        #plt.clim(0., 1.)
-        plt.imshow(Z, cmap='gray', vmin=0.0, vmax=1.0)
-        plt.colorbar()
-        ax.set_title(title)
-
-        #ref_x = []
-        #ref_y = []
-        #for ref_point in self.ref_points:
-        #    ref_x.append(ref_point[0])
-        #    ref_y.append(ref_point[1])
-
-        #ax.scatter(ref_x, ref_y, c='k')

@@ -1,9 +1,12 @@
 from piecewise_model import PWAModel
 
+import multiprocessing
 import cv2
 
 import matplotlib.pyplot as plt
 import numpy as np
+
+from functools import partial
 
 def load_image():
     image = cv2.imread('/home/cannon/Documents/piecewise_rls_approximation/lovett.jpg')
@@ -31,6 +34,53 @@ def float_loc_to_pixel_coords(loc, image):
 
     return (x, y)
 
+def compute_image_row(model, X, Y, nx, ny, i):
+    row = np.zeros((ny,))
+    for j in range(ny):
+        input_vec = np.array([X[i,j], Y[i,j]]).reshape((2,1))
+        row[j] = model.predict(input_vec)
+
+    return row
+
+def plot_model(model, ax, title):
+    p = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
+
+    x = np.linspace(0.0, 1.0, 768)
+    y = np.linspace(0.0, 1.0, 768)
+
+    nx = len(x)
+    ny = len(y)
+
+    X, Y = np.meshgrid(x, y)
+    f = partial(compute_image_row, model, X, Y, nx, ny)
+    rows = p.map(f, range(nx))
+    Z = np.stack(rows[::-1])
+
+    # Old version
+    #Z = np.zeros_like(X)
+    #for i in range(nx):
+    #    for j in range(ny):
+    #        input_vec = np.array([X[i,j], Y[i,j]]).reshape((2,1))
+    #        Z[nx - i - 1, j] = model.predict(input_vec)
+
+
+    plt.sca(ax)
+    #plt.xlim(0., 1.)
+    #plt.ylim(0., 1.)
+    #plt.contourf(x, y, Z, levels=255, cmap='gray')
+    #plt.clim(0., 1.)
+    plt.imshow(Z, cmap='gray', vmin=0.0, vmax=1.0)
+    plt.colorbar()
+    ax.set_title(title)
+
+    #ref_x = []
+    #ref_y = []
+    #for ref_point in model.ref_points:
+    #    ref_x.append(ref_point[0])
+    #    ref_y.append(ref_point[1])
+
+    #ax.scatter(ref_x, ref_y, c='k')
+
 def run():
     image = load_image()
     pwa_model = PWAModel()
@@ -47,11 +97,10 @@ def run():
         pwa_model.process_datum(loc, pixel)
 
         if iteration % 1000 == 0:
-            plt.figure(figsize=(8, 6))
-            pwa_model.plot_model(plt.gca(), "Fit PWA Model After {} Samples".format(iteration))
+            plot_model(pwa_model, plt.gca(), "Fit PWA Model After {} Samples".format(iteration))
             #plt.show()
             plt.savefig('plots/approx_{}.png'.format(iteration), dpi=100)
-            plt.close()
+            plt.clf()
 
         if iteration % 100 == 0 and iteration > 0:
             pwa_model.remove_random_ref()
