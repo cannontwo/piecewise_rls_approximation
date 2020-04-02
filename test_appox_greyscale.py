@@ -46,13 +46,15 @@ def run():
 
         pwa_model.process_datum(loc, pixel)
 
-        if iteration % 10000 == 0:
+        if iteration % 1000 == 0:
             plt.figure(figsize=(8, 6))
             pwa_model.plot_model(plt.gca(), "Fit PWA Model After {} Samples".format(iteration))
             #plt.show()
             plt.savefig('plots/approx_{}.png'.format(iteration), dpi=100)
             plt.close()
 
+        if iteration % 100 == 0 and iteration > 0:
+            pwa_model.remove_random_ref()
 
 if __name__ == "__main__":
     run()
