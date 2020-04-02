@@ -100,8 +100,5 @@ def run():
             plt.savefig('plots/approx_{}.png'.format(iteration), dpi=100)
             plt.gca().clear()
 
-        if iteration % 100 == 0 and iteration > 0:
-            pwa_model.remove_random_ref()
-
 if __name__ == "__main__":
     run()
