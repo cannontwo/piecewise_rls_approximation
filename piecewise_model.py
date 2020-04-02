@@ -115,4 +115,3 @@ class PWAModel():
         ref = self.get_nearest_reference(x)
 
         return self.local_models[tuple(ref)].predict(x)
-
