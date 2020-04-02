@@ -130,8 +130,8 @@ class PWAModel():
     def plot_model(self, ax, title):
         p = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
 
-        x = np.linspace(0.0, 1.0, 768/2)
-        y = np.linspace(0.0, 1.0, 768/2)
+        x = np.linspace(0.0, 1.0, 768)
+        y = np.linspace(0.0, 1.0, 768)
 
         nx = len(x)
         ny = len(y)
