@@ -80,7 +80,7 @@ def plot_model(model, ax, title, pool):
 
 def run():
     image = load_image()
-    pwa_model = PWAModel()
+    pwa_model = PWAModel(1)
 
     p = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
     iteration = 0
@@ -95,7 +95,7 @@ def run():
         pwa_model.process_datum(loc, pixel)
 
         if iteration % 1000 == 0:
-            plot_model(pwa_model, plt.gca(), "Fit PWA Model After {} Samples".format(iteration), pool)
+            plot_model(pwa_model, plt.gca(), "Fit PWA Model After {} Samples".format(iteration), p)
             #plt.show()
             plt.savefig('plots/approx_{}.png'.format(iteration), dpi=100)
             plt.gca().clear()
