@@ -42,8 +42,7 @@ def compute_image_row(model, X, Y, nx, ny, i):
 
     return row
 
-def plot_model(model, ax, title):
-    p = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
+def plot_model(model, ax, title, pool):
 
     x = np.linspace(0.0, 1.0, 768)
     y = np.linspace(0.0, 1.0, 768)
@@ -53,7 +52,7 @@ def plot_model(model, ax, title):
 
     X, Y = np.meshgrid(x, y)
     f = partial(compute_image_row, model, X, Y, nx, ny)
-    rows = p.map(f, range(nx))
+    rows = pool.map(f, range(nx))
     Z = np.stack(rows[::-1])
 
     # Old version
@@ -64,13 +63,11 @@ def plot_model(model, ax, title):
     #        Z[nx - i - 1, j] = model.predict(input_vec)
 
 
-    plt.sca(ax)
     #plt.xlim(0., 1.)
     #plt.ylim(0., 1.)
     #plt.contourf(x, y, Z, levels=255, cmap='gray')
     #plt.clim(0., 1.)
-    plt.imshow(Z, cmap='gray', vmin=0.0, vmax=1.0)
-    plt.colorbar()
+    ax.imshow(Z, cmap='gray', vmin=0.0, vmax=1.0)
     ax.set_title(title)
 
     #ref_x = []
@@ -85,6 +82,7 @@ def run():
     image = load_image()
     pwa_model = PWAModel()
 
+    p = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
     iteration = 0
     while iteration < 1e8:
         print("On iteration {}".format(iteration))
@@ -97,10 +95,10 @@ def run():
         pwa_model.process_datum(loc, pixel)
 
         if iteration % 1000 == 0:
-            plot_model(pwa_model, plt.gca(), "Fit PWA Model After {} Samples".format(iteration))
+            plot_model(pwa_model, plt.gca(), "Fit PWA Model After {} Samples".format(iteration), pool)
             #plt.show()
             plt.savefig('plots/approx_{}.png'.format(iteration), dpi=100)
-            plt.clf()
+            plt.gca().clear()
 
         if iteration % 100 == 0 and iteration > 0:
             pwa_model.remove_random_ref()

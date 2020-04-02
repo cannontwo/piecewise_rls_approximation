@@ -78,7 +78,7 @@ class RLSFilter():
     def predict(self, state):
         feat = self._make_feature_vec(state)
         prediction = feat.dot(self.theta).transpose() + self.intercept
-        assert(prediction.shape == (1, 1))
+        assert(prediction.shape == (self.output_dim, 1))
 
         return prediction
 

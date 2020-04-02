@@ -8,12 +8,13 @@ class PWAModel():
     Class representing a piecewise-affine regression model on a Voronoi
     partition.
     """
-    def __init__(self):
+    def __init__(self, output_dim):
+        self.output_dim = output_dim
         self.ref_points = [np.array([0.5, 0.5])]
         self.kdt = KDTree(np.array(self.ref_points), leafsize=5)
 
         self.local_models = {}
-        self.local_models[tuple(self.ref_points[0])] = RLSFilter(2, 1, self.ref_points[0].reshape((2, 1)))
+        self.local_models[tuple(self.ref_points[0])] = RLSFilter(2, self.output_dim, self.ref_points[0].reshape((2, 1)))
 
         self.t = 1.0
 
@@ -75,8 +76,8 @@ class PWAModel():
         self.ref_points.append(new_ref_1)
         self.ref_points.append(new_ref_2)
 
-        self.local_models[tuple(new_ref_1)] = RLSFilter(2, 1, new_ref_1.reshape((2, 1)))
-        self.local_models[tuple(new_ref_2)] = RLSFilter(2, 1, new_ref_2.reshape((2, 1)))
+        self.local_models[tuple(new_ref_1)] = RLSFilter(2, self.output_dim, new_ref_1.reshape((2, 1)))
+        self.local_models[tuple(new_ref_2)] = RLSFilter(2, self.output_dim, new_ref_2.reshape((2, 1)))
 
         self.kdt = KDTree(np.array(self.ref_points), leafsize=5)
 
@@ -98,6 +99,7 @@ class PWAModel():
 
     def process_datum(self, state, output):
         assert(state.shape == (2,1))
+        assert(output.shape == (self.output_dim, 1))
 
         self.t += 1.0
 
