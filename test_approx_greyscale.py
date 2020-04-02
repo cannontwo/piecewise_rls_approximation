@@ -97,7 +97,7 @@ def run():
         if iteration % 1000 == 0:
             plot_model(pwa_model, plt.gca(), "Fit PWA Model After {} Samples".format(iteration), p)
             #plt.show()
-            plt.savefig('plots/approx_{}.png'.format(iteration), dpi=100)
+            plt.savefig('plots/approx_{}.png'.format(int(iteration/1000)), dpi=100)
             plt.gca().clear()
 
 if __name__ == "__main__":
