@@ -46,13 +46,15 @@ def compute_image_row(model, X, Y, nx, ny, i):
     return row
 
 def plot_model(model, ax, nx, ny, title, pool):
+    nx_samp = int(nx/4)
+    ny_samp = int(ny/4)
 
-    x = np.linspace(0.0, 1.0, nx)
-    y = np.linspace(0.0, 1.0, ny)
+    x = np.linspace(0.0, 1.0, nx_samp)
+    y = np.linspace(0.0, 1.0, ny_samp)
 
     X, Y = np.meshgrid(x, y)
-    f = partial(compute_image_row, model, X, Y, nx, ny)
-    rows = pool.map(f, range(nx))
+    f = partial(compute_image_row, model, X, Y, nx_samp, ny_samp)
+    rows = pool.map(f, range(nx_samp))
     Z = np.stack(rows[::-1])
 
     # Old version
@@ -81,6 +83,7 @@ def plot_model(model, ax, nx, ny, title, pool):
 def run(image_filename):
     image, nx, ny = load_image(image_filename)
     pwa_model = PWAModel(3)
+    analytic_pwa_model = PWAModel(3, analytic=True)
 
     p = multiprocessing.Pool(multiprocessing.cpu_count() - 1)
     iteration = 0
@@ -93,10 +96,13 @@ def run(image_filename):
         print("{}; {}".format(float_loc_to_pixel_coords(loc, image), float_to_rgb(pixel)))
 
         pwa_model.process_datum(loc, pixel)
+        analytic_pwa_model.process_datum(loc, pixel)
 
         if iteration % 1000 == 0:
+            plt.subplot(1, 2, 1)
             plot_model(pwa_model, plt.gca(), nx, ny, "Fit PWA Model After {} Samples".format(iteration), p)
-            #plt.show()
+            plt.subplot(1, 2, 2)
+            plot_model(analytic_pwa_model, plt.gca(), nx, ny, "Fit Analytic InterceptPWA Model After {} Samples".format(iteration), p)
             plt.savefig('plots/approx_{}.png'.format(int(iteration/1000)), dpi=100)
             plt.gca().clear()
 

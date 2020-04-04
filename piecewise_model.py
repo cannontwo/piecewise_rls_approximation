@@ -1,20 +1,25 @@
 import numpy as np
 
 from scipy.spatial import cKDTree as KDTree
-from local_rls_filter import RLSFilter
+from local_rls_filter import RLSFilter, RLSFilterAnalyticIntercept
 
 class PWAModel():
     """
     Class representing a piecewise-affine regression model on a Voronoi
     partition.
     """
-    def __init__(self, output_dim):
+    def __init__(self, output_dim, analytic=False):
         self.output_dim = output_dim
         self.ref_points = [np.array([0.5, 0.5])]
         self.kdt = KDTree(np.array(self.ref_points), leafsize=5)
 
+        self.analytic = analytic
+
         self.local_models = {}
-        self.local_models[tuple(self.ref_points[0])] = RLSFilter(2, self.output_dim, self.ref_points[0].reshape((2, 1)))
+        if not self.analytic:
+            self.local_models[tuple(self.ref_points[0])] = RLSFilter(2, self.output_dim, self.ref_points[0].reshape((2, 1)))
+        else:
+            self.local_models[tuple(self.ref_points[0])] = RLSFilterAnalyticIntercept(2, self.output_dim, self.ref_points[0].reshape((2, 1)))
 
         self.t = 1.0
 
@@ -76,8 +81,13 @@ class PWAModel():
         self.ref_points.append(new_ref_1)
         self.ref_points.append(new_ref_2)
 
-        self.local_models[tuple(new_ref_1)] = RLSFilter(2, self.output_dim, new_ref_1.reshape((2, 1)))
-        self.local_models[tuple(new_ref_2)] = RLSFilter(2, self.output_dim, new_ref_2.reshape((2, 1)))
+        if not self.analytic:
+            self.local_models[tuple(new_ref_1)] = RLSFilter(2, self.output_dim, new_ref_1.reshape((2, 1)))
+            self.local_models[tuple(new_ref_2)] = RLSFilter(2, self.output_dim, new_ref_2.reshape((2, 1)))
+        else:
+            self.local_models[tuple(new_ref_1)] = RLSFilterAnalyticIntercept(2, self.output_dim, new_ref_1.reshape((2, 1)))
+            self.local_models[tuple(new_ref_2)] = RLSFilterAnalyticIntercept(2, self.output_dim, new_ref_2.reshape((2, 1)))
+
 
         self.kdt = KDTree(np.array(self.ref_points), leafsize=5)
 
